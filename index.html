@@ -345,6 +345,9 @@
     display: grid; grid-template-columns: repeat(3, 1fr);
     gap: 2rem; margin-bottom: 4rem;
   }
+  .kaarten-opties--twee {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .kaart-optie {
     border: 1px solid rgba(201,168,76,0.2);
     padding: 2.5rem 2rem; text-align: center;
@@ -574,7 +577,8 @@
     nav { padding: 1rem 1.5rem; }
     .nav-links { display: none; }
     .over-grid { grid-template-columns: 1fr; gap: 3rem; }
-    .kaarten-opties { grid-template-columns: 1fr; }
+    .kaarten-opties,
+    .kaarten-opties--twee { grid-template-columns: 1fr; }
     .highlights-grid { grid-template-columns: 1fr; }
     .form-row { grid-template-columns: 1fr; }
     .fotos-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
@@ -1050,7 +1054,7 @@
     </div>
 
     <!-- KAART OPTIES -->
-    <div class="kaarten-opties" style="grid-template-columns: repeat(2,1fr); max-width:800px; margin:0 auto 4rem;">
+    <div class="kaarten-opties kaarten-opties--twee" style="max-width:800px; margin:0 auto 4rem;">
       <div class="kaart-optie" onclick="selectKaart(this, 'Losse kaart', 255)">
         <div class="kaart-type">Losse kaart</div>
         <div class="kaart-naam">Entree</div>
