@@ -1245,7 +1245,7 @@
         <div class="leden-card admin-only" onclick="toggleLedenSectie('sectie-veiling')" style="position:relative;">
           <div class="leden-card-icon">🔨</div>
           <h3>Veiling</h3>
-          <p>Beheer veilingitems en maak veilingfacturen aan met het kenmerk VL2026 voor winnende bieders.</p>
+          <p>Beheer veilingitems en maak facturen aan met het kenmerk 2026 voor winnende bieders.</p>
           <span class="admin-kaart-label">ADMIN</span>
         </div>
       </div>
@@ -1503,7 +1503,7 @@
         <div style="border:1px solid rgba(201,168,76,0.2); padding:2rem; margin-bottom:1.5rem;">
           <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.5rem; color:var(--goud-licht); margin-bottom:0.5rem;">🔨 Veilingbeheer</h3>
           <p style="font-size:0.78rem; opacity:0.55; margin-bottom:2rem; line-height:1.8;">
-            Voeg hier de veilingitems toe. Per gewonnen item maak je een veilingfactuur aan met het kenmerk <strong style="color:var(--goud);">VL2026-XXXX</strong>.
+            Voeg hier de veilingitems toe. Per gewonnen item maak je een factuur aan met het kenmerk <strong style="color:var(--goud);">2026-XXXX</strong>.
           </p>
 
           <!-- TAB KNOPPEN -->
@@ -3059,7 +3059,7 @@
     }
     if (!window.jspdf) { alert('PDF-bibliotheek wordt nog geladen, probeer opnieuw.'); return; }
 
-    const factuurNr = 'VL2026-' + String(Math.floor(Math.random() * 9000) + 1000);
+    const factuurNr = '2026-' + String(Math.floor(Math.random() * 9000) + 1000);
     const datum     = new Date().toLocaleDateString('nl-NL');
     // BTW terugrekenen vanuit het bedrag incl. BTW, zodat de regels exact optellen (geen afrondingsgepiel)
     const exclBTW   = Math.round(inclBTW / 1.21 * 100) / 100;
@@ -3089,7 +3089,7 @@
     doc.setTextColor(201, 168, 76);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('VEILINGFACTUUR', 190, 22, { align: 'right' });
+    doc.text('FACTUUR', 190, 22, { align: 'right' });
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(245, 237, 216);
@@ -3115,7 +3115,7 @@
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(30, 20, 5);
-    doc.text('VEILINGFACTUUR nr. ' + factuurNr, 20, y); y += 9;
+    doc.text('FACTUUR nr. ' + factuurNr, 20, y); y += 9;
 
     // ── Regelpost ──
     doc.setFontSize(8);
@@ -3175,7 +3175,7 @@
     doc.setTextColor(140, 120, 70);
     doc.text('KvK: 75852462  ·  BTW: NL860420036B01  ·  Rabobank Parkstad: NL88 RABO 0346 2307 56', 105, 291, { align: 'center' });
 
-    doc.save('Veilingfactuur_' + factuurNr + '_Iereroad_Gala_2026.pdf');
+    doc.save('Factuur_' + factuurNr + '_Iereroad_Gala_2026.pdf');
 
     // Reset formulier
     ['veiling-factuur-item','veiling-factuur-bod','veiling-factuur-naam','veiling-factuur-email','veiling-factuur-bedrijf','veiling-factuur-adres']
