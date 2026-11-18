@@ -1245,7 +1245,7 @@
         <div class="leden-card admin-only" onclick="toggleLedenSectie('sectie-veiling')" style="position:relative;">
           <div class="leden-card-icon">🔨</div>
           <h3>Veiling</h3>
-          <p>Beheer veilingitems en maak facturen aan met het kenmerk 2026 voor winnende bieders.</p>
+          <p>Beheer veilingitems en maak facturen aan met het oplopende kenmerk VL2026 voor winnende bieders.</p>
           <span class="admin-kaart-label">ADMIN</span>
         </div>
       </div>
@@ -1503,7 +1503,7 @@
         <div style="border:1px solid rgba(201,168,76,0.2); padding:2rem; margin-bottom:1.5rem;">
           <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.5rem; color:var(--goud-licht); margin-bottom:0.5rem;">🔨 Veilingbeheer</h3>
           <p style="font-size:0.78rem; opacity:0.55; margin-bottom:2rem; line-height:1.8;">
-            Voeg hier de veilingitems toe. Per gewonnen item maak je een factuur aan met het kenmerk <strong style="color:var(--goud);">2026-XXXX</strong>.
+            Voeg hier de veilingitems toe. Per gewonnen item maak je een factuur aan met het oplopende kenmerk <strong style="color:var(--goud);">VL2026-XXXX</strong> (start bij VL2026-004).
           </p>
 
           <!-- TAB KNOPPEN -->
@@ -1533,6 +1533,12 @@
           <!-- TAB: VEILINGFACTUUR AANMAKEN -->
           <div id="veiling-tab-factuur" style="display:none;">
             <p style="font-size:0.78rem; opacity:0.6; margin-bottom:1.5rem;">Vul het bedrag <strong>inclusief BTW</strong> en de gegevens van de bieder in — de app rekent de BTW terug. Het item kiezen is optioneel (voor je eigen administratie).</p>
+            <div style="margin-bottom:1.2rem;">
+              <div class="form-group">
+                <label>Factuurnummer (loopt automatisch op)</label>
+                <input type="text" id="veiling-factuur-nr" placeholder="VL2026-004" style="background:rgba(255,255,255,0.06); border:1px solid rgba(201,168,76,0.25); color:var(--crème); padding:0.6rem 0.9rem; font-family:'Josefin Sans',sans-serif; font-size:0.85rem; outline:none; width:100%;">
+              </div>
+            </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1.2rem;">
               <div class="form-group">
                 <label>Veilingitem</label>
@@ -2979,7 +2985,24 @@
     document.getElementById('veiling-tab-factuur-btn').style.cssText = tab === 'factuur'
       ? 'background:var(--goud); color:var(--donker); border:none; padding:0.6rem 1.5rem; font-family:\'Josefin Sans\',sans-serif; font-size:0.7rem; letter-spacing:0.15em; cursor:pointer; text-transform:uppercase;'
       : 'background:none; border:none; color:var(--crème); padding:0.6rem 1.5rem; font-family:\'Josefin Sans\',sans-serif; font-size:0.7rem; letter-spacing:0.15em; cursor:pointer; text-transform:uppercase; opacity:0.6;';
-    if (tab === 'factuur') vulVeilingItemSelect();
+    if (tab === 'factuur') { vulVeilingItemSelect(); vulVolgendFactuurNr(); }
+  }
+
+  // Oplopend factuurnummer. De centrale teller staat op de server (Netlify Blobs), zodat
+  // elk apparaat dezelfde telling heeft; de browser-teller dient alleen als offline terugval.
+  const FACTUUR_FN = '/.netlify/functions/factuurnummer';
+  function volgendFactuurNr() {
+    const teller = parseInt(localStorage.getItem('ir_factuur_teller') || '4', 10);
+    return 'VL2026-' + String(teller).padStart(3, '0');
+  }
+  async function vulVolgendFactuurNr() {
+    const veld = document.getElementById('veiling-factuur-nr');
+    if (!veld) return;
+    veld.value = volgendFactuurNr();                 // direct een waarde tonen
+    try {
+      const r = await fetch(FACTUUR_FN, { method: 'GET' });
+      if (r.ok) { const d = await r.json(); if (d && d.nummer) veld.value = d.nummer; }
+    } catch (e) { /* offline: lokale waarde blijft staan */ }
   }
 
   function voegVeilingItemToe() {
@@ -3059,7 +3082,8 @@
     }
     if (!window.jspdf) { alert('PDF-bibliotheek wordt nog geladen, probeer opnieuw.'); return; }
 
-    const factuurNr = '2026-' + String(Math.floor(Math.random() * 9000) + 1000);
+    let factuurNr = document.getElementById('veiling-factuur-nr').value.trim();
+    if (!factuurNr) factuurNr = volgendFactuurNr();
     const datum     = new Date().toLocaleDateString('nl-NL');
     // BTW terugrekenen vanuit het bedrag incl. BTW, zodat de regels exact optellen (geen afrondingsgepiel)
     const exclBTW   = Math.round(inclBTW / 1.21 * 100) / 100;
@@ -3177,12 +3201,35 @@
 
     doc.save('Factuur_' + factuurNr + '_Iereroad_Gala_2026.pdf');
 
-    // Reset formulier
+    // Welk nummer is gebruikt?
+    const mNr = factuurNr.match(/(\d+)\s*$/);
+    const gebruikt = mNr ? parseInt(mNr[1], 10) : null;
+    if (gebruikt !== null) localStorage.setItem('ir_factuur_teller', String(gebruikt + 1)); // offline terugval
+
+    // Reset formulier (nummerveld apart)
     ['veiling-factuur-item','veiling-factuur-bod','veiling-factuur-naam','veiling-factuur-email','veiling-factuur-bedrijf','veiling-factuur-adres']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const omschrEl = document.getElementById('veiling-factuur-omschrijving');
     if (omschrEl) omschrEl.value = 'Sponsoring van het jeugdcarnaval Heerlen';
-    alert('Veilingfactuur ' + factuurNr + ' is aangemaakt en gedownload.');
+
+    // Centrale teller op de server bijwerken, daarna het nummerveld op het volgende nummer zetten
+    (async () => {
+      let volgend = volgendFactuurNr();
+      if (gebruikt !== null) {
+        try {
+          const r = await fetch(FACTUUR_FN, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ waarde: gebruikt })
+          });
+          if (r.ok) { const d = await r.json(); if (d && d.volgende) volgend = d.volgende; }
+        } catch (e) { /* offline: lokale terugval blijft */ }
+      }
+      const nrEl = document.getElementById('veiling-factuur-nr');
+      if (nrEl) nrEl.value = volgend;
+    })();
+
+    alert('Factuur ' + factuurNr + ' is aangemaakt en gedownload.');
   }
 
 
